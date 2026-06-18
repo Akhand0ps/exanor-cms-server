@@ -24,7 +24,14 @@ const postSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  publishedAt: { type: Date }
+  publishedAt: { type: Date },
+  
+  // Revision System
+  hasPendingUpdates: { type: Boolean, default: false },
+  pendingUpdates: {
+    type: Object,
+    default: null
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Post', postSchema);

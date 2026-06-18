@@ -66,8 +66,39 @@ const updatePost = async (req, res) => {
       return res.status(403).json({ message: 'You can only edit your own posts' });
     }
 
+    if (isAdmin && req.body.approveUpdates) {
+      if (post.hasPendingUpdates && post.pendingUpdates) {
+        Object.assign(post, post.pendingUpdates);
+        post.hasPendingUpdates = false;
+        post.pendingUpdates = null;
+        const updatedPost = await post.save();
+        await logAudit(req.user._id, 'APPROVE_POST_UPDATES', 'Post', updatedPost._id, { title: updatedPost.title });
+        return res.json(updatedPost);
+      } else {
+        return res.status(400).json({ message: 'No pending updates to approve' });
+      }
+    }
+
+    if (isAdmin && req.body.rejectUpdates) {
+      post.hasPendingUpdates = false;
+      post.pendingUpdates = null;
+      const updatedPost = await post.save();
+      await logAudit(req.user._id, 'REJECT_POST_UPDATES', 'Post', updatedPost._id, { title: updatedPost.title });
+      return res.json(updatedPost);
+    }
+
     if (!isAdmin && post.status === 'PUBLISHED') {
-      return res.status(403).json({ message: 'Interns cannot edit published posts' });
+      // Save edits as pending updates for Admin review
+      const allowedUpdates = { ...req.body };
+      delete allowedUpdates.status;
+      delete allowedUpdates.rejectionFeedback;
+
+      post.pendingUpdates = allowedUpdates;
+      post.hasPendingUpdates = true;
+      
+      const updatedPost = await post.save();
+      await logAudit(req.user._id, 'SUBMIT_POST_UPDATES', 'Post', updatedPost._id, { title: updatedPost.title });
+      return res.json(updatedPost);
     }
 
     if (!isAdmin) {

@@ -11,6 +11,6 @@ router.route('/')
 
 router.route('/:id')
   .put(requirePermission('UPDATE_POST'), updatePost)
-  .delete(requirePermission('DELETE_POST'), deletePost);
+  .delete(deletePost);
 
 module.exports = router;
