@@ -1,6 +1,17 @@
 const Post = require('../models/Post');
 const logAudit = require('../utils/auditLogger');
 
+const triggerVercelDeploy = async () => {
+  const hookUrl = process.env.VERCEL_DEPLOY_HOOK;
+  if (!hookUrl) return;
+  try {
+    await fetch(hookUrl, { method: 'POST' });
+    console.log('Vercel deploy triggered successfully');
+  } catch (error) {
+    console.error('Failed to trigger Vercel deploy:', error);
+  }
+};
+
 // @desc    Fetch all published posts (Public)
 // @route   GET /api/public/posts
 // @access  Public
@@ -59,6 +70,7 @@ const updatePost = async (req, res) => {
   const post = await Post.findById(req.params.id);
 
   if (post) {
+    const originalStatus = post.status;
     const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role);
     const isOwner = post.author.toString() === req.user._id.toString();
 
@@ -72,6 +84,7 @@ const updatePost = async (req, res) => {
         post.hasPendingUpdates = false;
         post.pendingUpdates = null;
         const updatedPost = await post.save();
+        triggerVercelDeploy(); // Trigger deploy since pending updates are merged into published post
         await logAudit(req.user._id, 'APPROVE_POST_UPDATES', 'Post', updatedPost._id, { title: updatedPost.title });
         return res.json(updatedPost);
       } else {
@@ -119,6 +132,10 @@ const updatePost = async (req, res) => {
 
     const updatedPost = await post.save();
     
+    if (updatedPost.status === 'PUBLISHED' || originalStatus === 'PUBLISHED') {
+      triggerVercelDeploy();
+    }
+    
     // Detailed Audit Logging
     let action = 'UPDATE_POST';
     if (req.body.status === 'IN_REVIEW' && post.status !== 'IN_REVIEW') action = 'SUBMIT_POST_FOR_REVIEW';
@@ -151,6 +168,9 @@ const deletePost = async (req, res) => {
     }
 
     await post.deleteOne();
+    if (post.status === 'PUBLISHED') {
+      triggerVercelDeploy();
+    }
     await logAudit(req.user._id, 'DELETE_POST', 'Post', post._id, { title: post.title });
     res.json({ message: 'Post removed' });
   } else {
