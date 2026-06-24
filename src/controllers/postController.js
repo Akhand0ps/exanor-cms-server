@@ -59,7 +59,7 @@ const updatePost = async (req, res) => {
   const post = await Post.findById(req.params.id);
 
   if (post) {
-    const isAdmin = req.user.role === 'ADMIN';
+    const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role);
     const isOwner = post.author.toString() === req.user._id.toString();
 
     if (!isAdmin && !isOwner) {
@@ -92,6 +92,7 @@ const updatePost = async (req, res) => {
       const allowedUpdates = { ...req.body };
       delete allowedUpdates.status;
       delete allowedUpdates.rejectionFeedback;
+      delete allowedUpdates.isFeatured;
 
       post.pendingUpdates = allowedUpdates;
       post.hasPendingUpdates = true;
@@ -107,6 +108,7 @@ const updatePost = async (req, res) => {
         return res.status(403).json({ message: 'Interns can only set status to DRAFT or IN_REVIEW' });
       }
       delete req.body.rejectionFeedback; // Interns cannot set feedback
+      delete req.body.isFeatured; // Interns cannot set featured status
     }
 
     Object.assign(post, req.body);

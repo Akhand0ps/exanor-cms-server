@@ -14,6 +14,7 @@ const postSchema = new mongoose.Schema({
   focusKeyword: { type: String },
   canonicalUrl: { type: String },
   isIndexingAllowed: { type: Boolean, default: true },
+  isFeatured: { type: Boolean, default: false },
   
   status: {
     type: String,
