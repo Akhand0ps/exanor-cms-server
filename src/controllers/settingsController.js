@@ -1,4 +1,5 @@
 const Setting = require('../models/Setting');
+const { triggerVercelDeploy } = require('../utils/webhookService');
 
 // @desc    Get global settings
 // @route   GET /api/public/settings OR /api/admin/settings
@@ -33,6 +34,7 @@ exports.updateSettings = async (req, res) => {
     if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
 
     await settings.save();
+    triggerVercelDeploy();
 
     res.status(200).json(settings);
   } catch (error) {
