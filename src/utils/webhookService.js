@@ -13,7 +13,9 @@ const triggerRevalidation = async (slug = null) => {
   const secret = process.env.REVALIDATION_SECRET;
   if (!secret) return;
   
-  const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://exanor.com';
+  // Use FRONTEND_URL if defined, otherwise fallback to exanor.com. 
+  // We avoid checking NODE_ENV here because Render sometimes has NODE_ENV=development.
+  const baseUrl = process.env.FRONTEND_URL || 'https://exanor.com';
   
   const pathsToRevalidate = ['/blog'];
   if (slug) {
