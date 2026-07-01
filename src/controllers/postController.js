@@ -1,6 +1,6 @@
 const Post = require('../models/Post');
 const logAudit = require('../utils/auditLogger');
-const { triggerVercelDeploy } = require('../utils/webhookService');
+const { triggerRevalidation } = require('../utils/webhookService');
 
 // @desc    Fetch all published posts (Public)
 // @route   GET /api/public/posts
@@ -74,7 +74,7 @@ const updatePost = async (req, res) => {
         post.hasPendingUpdates = false;
         post.pendingUpdates = null;
         const updatedPost = await post.save();
-        triggerVercelDeploy(); // Trigger deploy since pending updates are merged into published post
+        triggerRevalidation(updatedPost.slug); // Revalidate blog feed and specific post
         await logAudit(req.user._id, 'APPROVE_POST_UPDATES', 'Post', updatedPost._id, { title: updatedPost.title });
         return res.json(updatedPost);
       } else {
@@ -123,7 +123,7 @@ const updatePost = async (req, res) => {
     const updatedPost = await post.save();
     
     if (updatedPost.status === 'PUBLISHED' || originalStatus === 'PUBLISHED') {
-      triggerVercelDeploy();
+      triggerRevalidation(updatedPost.slug);
     }
     
     // Detailed Audit Logging
@@ -159,7 +159,7 @@ const deletePost = async (req, res) => {
 
     await post.deleteOne();
     if (post.status === 'PUBLISHED') {
-      triggerVercelDeploy();
+      triggerRevalidation(post.slug);
     }
     await logAudit(req.user._id, 'DELETE_POST', 'Post', post._id, { title: post.title });
     res.json({ message: 'Post removed' });
