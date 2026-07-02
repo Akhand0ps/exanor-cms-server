@@ -60,7 +60,7 @@ const createUser = async (req, res) => {
 // @route   PUT /api/admin/users/:id
 // @access  Private (MANAGE_USERS)
 const updateUser = async (req, res) => {
-  const { firstName, email, profileImage, bio } = req.body;
+  const { firstName, email, profileImage, bio, linkedIn, twitter } = req.body;
   const user = await User.findById(req.params.id);
 
   if (user) {
@@ -69,6 +69,8 @@ const updateUser = async (req, res) => {
     user.email = email || user.email;
     user.profileImage = profileImage !== undefined ? profileImage : user.profileImage;
     user.bio = bio !== undefined ? bio : user.bio;
+    user.linkedIn = linkedIn !== undefined ? linkedIn : user.linkedIn;
+    user.twitter = twitter !== undefined ? twitter : user.twitter;
 
     const updatedUser = await user.save();
     await logAudit(req.user._id, 'UPDATE_USER', 'User', updatedUser._id, {});

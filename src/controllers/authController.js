@@ -67,4 +67,27 @@ const authUser = async (req, res) => {
   }
 };
 
-module.exports = { authUser, getUserProfile, changePassword };
+// @desc    Update user profile (social links)
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    user.linkedIn = req.body.linkedIn || user.linkedIn;
+    user.twitter = req.body.twitter || user.twitter;
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      linkedIn: updatedUser.linkedIn,
+      twitter: updatedUser.twitter,
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+};
+
+module.exports = { authUser, getUserProfile, changePassword, updateProfile };

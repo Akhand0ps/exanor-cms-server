@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   profileImage: { type: String, default: '' },
   bio: { type: String, default: '' },
+  linkedIn: { type: String, default: '' },
+  twitter: { type: String, default: '' },
   requiresPasswordChange: { type: Boolean, default: true },
   lastLogin: { type: Date },
   role: { 
